@@ -30,7 +30,7 @@ public class Board
             }
         }
     }
-
+    int[] move;
     public int Ai(Text[] list, string player, int lvl)
     {
         if (player == "X")
@@ -44,15 +44,15 @@ public class Board
             player_min = "X";
         }
         SetBoardFromText(list);
-        Debug.Log(string.Join(", ", board.ToList()));
-        int[] move = minimax(board, lvl, 1, -100, 100);
+        move = minimax(board, lvl, 1, -100, 100);
+        Debug.Log("best score: " + move[1] + " Move: " + move[0]);
         return move[0];
     }
 
+    
+
     int[] minimax(int[] board_a, int depth, int player, int alpha, int beta)
     {
-        
-        int vs_player = -player;
         int[] best;
         if (player == -1)
         {
@@ -95,7 +95,6 @@ public class Board
                 }
                 if (alpha >= beta)
                 {
-                    Debug.Log("prun");
                     break;
                 }
             }
@@ -103,8 +102,15 @@ public class Board
         return best;
     }
 
+    int plays;
     bool GameOver(int player, int[] board)
     {
+        // game over after 5 moves
+        plays = 0;
+        foreach (int i in board) {
+            plays += i * i;
+        }
+        if (plays < 5) return false;
         if (board[4] == player)
         {
             // right diaginal
@@ -159,7 +165,6 @@ public class Board
             if (board[2] == player && board[5] == player)
             {
                 current_score = 10 * player;
-                Debug.Log("YES " + player);
                 return true;
             }
 

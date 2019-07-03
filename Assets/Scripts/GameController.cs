@@ -7,28 +7,21 @@ using UnityEngine.UI;
 public class GameController : MonoBehaviour
 {
     public Text[] buttonList;
-    public Text playerSideText;
+
+    public Text scoreText;
+    public Button scoreButton;
 
     private string playerSide;
     private Board board = new Board();
     private bool gameOver = false;
 
-    private int gameMoves = 9;
-    private bool ai = false;
-
-    // scores
-    public Text xWins;
-    public Text oWins;
-    public Text dWins;
-
-    public Text aiLvl;
-
-    private bool aiTurn = false;
+    private int gameMoves = 8;
+    int move;
 
     void Awake()
     {
-        playerSide = "X";
         SetGameControllerReferenceOnButtons();
+        NewGame();
     }
 
     void SetGameControllerReferenceOnButtons()
@@ -46,7 +39,6 @@ public class GameController : MonoBehaviour
 
     public void EndTurn()
     {
-        gameMoves--;
         if (buttonList[0].text == playerSide && buttonList[1].text == playerSide && buttonList[2].text == playerSide)
         {
             GameOver(playerSide);
@@ -83,62 +75,74 @@ public class GameController : MonoBehaviour
         {
             GameOver("D");
         }
+        gameMoves--;
         ChangeSides();
-        if (!gameOver && playerSide == "O" && ai)
+        if (isAiTurn())
         {
-            Debug.Log(aiLvl.text);
-            int move = board.Ai(buttonList, playerSide, int.Parse(aiLvl.text));
-            Debug.Log("best move: " + move);
-            buttonList[move].GetComponentInParent<GridSpace>().SetSpace();
+            AiTurn();
         }
     }
-
-    private bool ai_turn()
+    private bool isAiTurn()
     {
-        aiTurn = !aiTurn;
-        return aiTurn;
+        return (!gameOver && playerSide == "O");
+    }
+    private void AiTurn()
+    {
+        // do random move if first or second try
+        if (gameMoves > 7)
+        {
+            List<int> moves = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8 };
+            System.Random random = new System.Random();
+            move = random.Next(0, moves.Count);
+            while (buttonList[move].text != "")
+            {
+                moves.RemoveAt(move);
+                move = random.Next(0, moves.Count);
+            }
+        }
+        else
+        {
+            move = board.Ai(buttonList, playerSide, 9);
+        }
+        buttonList[move].GetComponentInParent<GridSpace>().SetSpace();
     }
 
     public void ChangeSides()
     {
         playerSide = (playerSide == "X") ? "O" : "X";
-        playerSideText.text = playerSide;
     }
 
     void GameOver(string player)
     {
+        scoreButton.gameObject.SetActive(true);
         gameOver = true;
         for (int i = 0; i < buttonList.Length; i++)
         {
             buttonList[i].GetComponentInParent<Button>().interactable = false;
         }
+        // TODO add new game
+        // add butten to start new game
         if (player == "X")
         {
-            xWins.text = (1 + int.Parse(xWins.text)).ToString();
+            scoreText.text = "Win";
         }
         else if (player == "O")
         {
-            oWins.text = (1 + int.Parse(oWins.text)).ToString();
+            scoreText.text = "Lose";
         }
         else
         {
-            dWins.text = (1 + int.Parse(dWins.text)).ToString();
+            scoreText.text = "Draw";
         }
-    }
-    public void Reset()
-    {
-        Debug.Log("RESET");
-        NewGame();
-        xWins.text = 0.ToString();
-        oWins.text = 0.ToString();
-        dWins.text = 0.ToString();
     }
 
     public void NewGame()
     {
+        scoreButton.gameObject.SetActive(false);
         Debug.Log("NEW GAME");
-        gameMoves = 9;
+        gameMoves = 8;
         gameOver = false;
+        playerSide = "X";
         for (int i = 0; i < buttonList.Length; i++)
         {
             if (buttonList[i].text == "O")
@@ -150,35 +154,14 @@ public class GameController : MonoBehaviour
             buttonList[i].text = "";
             buttonList[i].GetComponentInParent<Button>().interactable = true;
         }
-        if (playerSide == "O" && ai)
+    }
+
+    public void JimmiStart()
+    {
+        if (gameMoves == 8)
         {
             ChangeSides();
-            gameMoves++;
-            EndTurn();
-        }
-    }
-
-    public void HumanVsHuman()
-    {
-        ai = false;
-    }
-    public void HumanVsAi()
-    {
-        ai = true;
-    }
-
-    public void AiLvlPluss()
-    {
-        if (aiLvl.text != "9")
-        {
-            aiLvl.text = (int.Parse(aiLvl.text) + 1).ToString();
-        }
-    }
-    public void AiLvlMinus()
-    {
-        if (aiLvl.text != "1")
-        {
-            aiLvl.text = (int.Parse(aiLvl.text) - 1).ToString();
+            AiTurn();
         }
     }
 }
